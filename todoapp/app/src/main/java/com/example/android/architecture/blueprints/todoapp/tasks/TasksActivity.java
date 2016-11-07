@@ -72,9 +72,7 @@ public class TasksActivity extends AppCompatActivity {
         }
 
         // Create the presenter
-        mTasksPresenter = new TasksPresenter(
-                Injection.provideUseCaseHandler(),
-                tasksFragment,
+        mTasksPresenter = new TasksPresenter(tasksFragment,
                 Injection.provideGetTasks(getApplicationContext()),
                 Injection.provideCompleteTasks(getApplicationContext()),
                 Injection.provideActivateTask(getApplicationContext()),

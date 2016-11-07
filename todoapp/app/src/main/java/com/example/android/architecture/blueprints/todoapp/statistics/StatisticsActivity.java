@@ -71,8 +71,7 @@ public class StatisticsActivity extends AppCompatActivity {
                     statisticsFragment, R.id.contentFrame);
         }
 
-        new StatisticsPresenter(Injection.provideUseCaseHandler(),
-                statisticsFragment,
+        new StatisticsPresenter(statisticsFragment,
                 Injection.provideGetStatistics(getApplicationContext()));
     }
 

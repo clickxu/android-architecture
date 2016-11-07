@@ -16,60 +16,72 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.UseCase;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.model.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
+import com.example.android.architecture.blueprints.todoapp.SimpleUseCase;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.filter.FilterFactory;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.filter.TaskFilter;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
 import java.util.List;
+
+import rx.Observable;
+import rx.functions.Func1;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Fetches the list of tasks.
  */
-public class GetTasks extends UseCase<GetTasks.RequestValues, GetTasks.ResponseValue> {
+public class GetTasks extends SimpleUseCase<GetTasks.RequestValues, GetTasks.ResponseValues> {
 
     private final TasksRepository mTasksRepository;
 
-    private final FilterFactory mFilterFactory;
-
-    public GetTasks(@NonNull TasksRepository tasksRepository, @NonNull FilterFactory filterFactory) {
+    public GetTasks(@NonNull TasksRepository tasksRepository,
+                    @NonNull BaseSchedulerProvider schedulerProvider) {
+        super(schedulerProvider.io(), schedulerProvider.ui());
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
-        mFilterFactory = checkNotNull(filterFactory, "filterFactory cannot be null!");
     }
 
     @Override
-    protected void executeUseCase(final RequestValues values) {
+    public Observable<ResponseValues> buildUseCase(final RequestValues values) {
         if (values.isForceUpdate()) {
             mTasksRepository.refreshTasks();
         }
 
-        mTasksRepository.getTasks(new TasksDataSource.LoadTasksCallback() {
-            @Override
-            public void onTasksLoaded(List<Task> tasks) {
-                TasksFilterType currentFiltering = values.getCurrentFiltering();
-                TaskFilter taskFilter = mFilterFactory.create(currentFiltering);
-
-                List<Task> tasksFiltered = taskFilter.filter(tasks);
-                ResponseValue responseValue = new ResponseValue(tasksFiltered);
-                getUseCaseCallback().onSuccess(responseValue);
-            }
-
-            @Override
-            public void onDataNotAvailable() {
-                getUseCaseCallback().onError();
-            }
-        });
-
+        return mTasksRepository.getTasks()
+                .flatMap(new Func1<List<Task>, Observable<Task>>() {
+                    @Override
+                    public Observable<Task> call(List<Task> tasks) {
+                        return Observable.from(tasks);
+                    }
+                })
+                .filter(new Func1<Task, Boolean>() {
+                    @Override
+                    public Boolean call(Task task) {
+                        switch (values.getCurrentFiltering()) {
+                            case ACTIVE_TASKS:
+                                return task.isActive();
+                            case COMPLETED_TASKS:
+                                return task.isCompleted();
+                            case ALL_TASKS:
+                            default:
+                                return true;
+                        }
+                    }
+                })
+                .toList()
+                .map(new Func1<List<Task>, ResponseValues>() {
+                    @Override
+                    public ResponseValues call(List<Task> tasks) {
+                        return new ResponseValues(tasks);
+                    }
+                });
     }
 
-    public static final class RequestValues implements UseCase.RequestValues {
+    public static final class RequestValues implements RxUseCase.RequestValues {
 
         private final TasksFilterType mCurrentFiltering;
         private final boolean mForceUpdate;
@@ -88,11 +100,11 @@ public class GetTasks extends UseCase<GetTasks.RequestValues, GetTasks.ResponseV
         }
     }
 
-    public static final class ResponseValue implements UseCase.ResponseValue {
+    public static final class ResponseValues implements RxUseCase.ResponseValues {
 
         private final List<Task> mTasks;
 
-        public ResponseValue(@NonNull List<Task> tasks) {
+        public ResponseValues(@NonNull List<Task> tasks) {
             mTasks = checkNotNull(tasks, "tasks cannot be null!");
         }
 

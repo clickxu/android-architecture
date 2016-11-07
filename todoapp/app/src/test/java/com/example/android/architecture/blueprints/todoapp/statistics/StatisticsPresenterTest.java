@@ -16,25 +16,24 @@
 
 package com.example.android.architecture.blueprints.todoapp.statistics;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.example.android.architecture.blueprints.todoapp.TestUseCaseScheduler;
-import com.example.android.architecture.blueprints.todoapp.UseCaseHandler;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.model.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.statistics.domain.usecase.GetStatistics;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.ImmediateSchedulerProvider;
 import com.google.common.collect.Lists;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
+
+import rx.Observable;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for the implementation of {@link StatisticsPresenter}
@@ -49,13 +48,7 @@ public class StatisticsPresenterTest {
     @Mock
     private StatisticsContract.View mStatisticsView;
 
-    /**
-     * {@link ArgumentCaptor} is a powerful Mockito API to capture argument values and use them to
-     * perform further actions or assertions on them.
-     */
-    @Captor
-    private ArgumentCaptor<TasksDataSource.LoadTasksCallback> mLoadTasksCallbackCaptor;
-
+    private BaseSchedulerProvider mSchedulerProvider;
 
     private StatisticsPresenter mStatisticsPresenter;
 
@@ -65,13 +58,16 @@ public class StatisticsPresenterTest {
         // inject the mocks in the test the initMocks method needs to be called.
         MockitoAnnotations.initMocks(this);
 
+        // Make the sure that all schedulers are immediate.
+        mSchedulerProvider = new ImmediateSchedulerProvider();
+
         // Get a reference to the class under test
         mStatisticsPresenter = givenStatisticsPresenter();
 
         // The presenter won't update the view unless it's active.
         when(mStatisticsView.isActive()).thenReturn(true);
 
-        // We start the tasks to 3, with one active and two completed
+        // We subscribe the tasks to 3, with one active and two completed
         TASKS = Lists.newArrayList(new Task("Title1", "Description1"),
                 new Task("Title2", "Description2", true), new Task("Title3", "Description3", true));
     }
@@ -80,16 +76,16 @@ public class StatisticsPresenterTest {
     public void loadEmptyTasksFromRepository_CallViewToDisplay() {
         // Given an initialized StatisticsPresenter with no tasks
         TASKS.clear();
+        setTasksAvailable(TASKS);
 
         // When loading of Tasks is requested
-        mStatisticsPresenter.start();
+        mStatisticsPresenter.subscribe();
 
         //Then progress indicator is shown
         verify(mStatisticsView).setProgressIndicator(true);
 
         // Callback is captured and invoked with stubbed tasks
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onTasksLoaded(TASKS);
+        verify(mTasksRepository).getTasks();
 
         // Then progress indicator is hidden and correct data is passed on to the view
         verify(mStatisticsView).setProgressIndicator(false);
@@ -99,16 +95,13 @@ public class StatisticsPresenterTest {
     @Test
     public void loadNonEmptyTasksFromRepository_CallViewToDisplay() {
         // Given an initialized StatisticsPresenter with 1 active and 2 completed tasks
+        setTasksAvailable(TASKS);
 
         // When loading of Tasks is requested
-        mStatisticsPresenter.start();
+        mStatisticsPresenter.subscribe();
 
         //Then progress indicator is shown
         verify(mStatisticsView).setProgressIndicator(true);
-
-        // Callback is captured and invoked with stubbed tasks
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onTasksLoaded(TASKS);
 
         // Then progress indicator is hidden and correct data is passed on to the view
         verify(mStatisticsView).setProgressIndicator(false);
@@ -117,21 +110,27 @@ public class StatisticsPresenterTest {
 
     @Test
     public void loadStatisticsWhenTasksAreUnavailable_CallErrorToDisplay() {
-        // When statistics are loaded
-        mStatisticsPresenter.start();
+        // Given that tasks data isn't available
+        setTasksNotAvailable();
 
-        // And tasks data isn't available
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onDataNotAvailable();
+        // When statistics are loaded
+        mStatisticsPresenter.subscribe();
 
         // Then an error message is shown
         verify(mStatisticsView).showLoadingStatisticsError();
     }
 
     private StatisticsPresenter givenStatisticsPresenter() {
-        UseCaseHandler useCaseHandler = new UseCaseHandler(new TestUseCaseScheduler());
-        GetStatistics getStatistics = new GetStatistics(mTasksRepository);
+        GetStatistics getStatistics = new GetStatistics(mTasksRepository, mSchedulerProvider);
 
-        return new StatisticsPresenter(useCaseHandler, mStatisticsView, getStatistics);
+        return new StatisticsPresenter(mStatisticsView, getStatistics);
+    }
+
+    private void setTasksAvailable(List<Task> tasks) {
+        when(mTasksRepository.getTasks()).thenReturn(Observable.just(tasks));
+    }
+
+    private void setTasksNotAvailable() {
+        when(mTasksRepository.getTasks()).thenReturn(Observable.<List<Task>>error(new Exception()));
     }
 }

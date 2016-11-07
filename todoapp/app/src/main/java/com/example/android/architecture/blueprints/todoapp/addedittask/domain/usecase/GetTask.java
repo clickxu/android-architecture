@@ -16,47 +16,45 @@
 
 package com.example.android.architecture.blueprints.todoapp.addedittask.domain.usecase;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.UseCase;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.model.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
+import com.example.android.architecture.blueprints.todoapp.SimpleUseCase;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+
+import rx.Observable;
+import rx.functions.Func1;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Retrieves a {@link Task} from the {@link TasksRepository}.
  */
-public class GetTask extends UseCase<GetTask.RequestValues, GetTask.ResponseValue> {
+public class GetTask extends SimpleUseCase<GetTask.RequestValues, GetTask.ResponseValues> {
 
     private final TasksRepository mTasksRepository;
 
-    public GetTask(@NonNull TasksRepository tasksRepository) {
+    public GetTask(@NonNull TasksRepository tasksRepository,
+                   @NonNull BaseSchedulerProvider schedulerProvider) {
+        super(schedulerProvider.io(), schedulerProvider.ui());
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
     @Override
-    protected void executeUseCase(final RequestValues values) {
-        mTasksRepository.getTask(values.getTaskId(), new TasksDataSource.GetTaskCallback() {
+    public Observable<ResponseValues> buildUseCase(RequestValues values) {
+        return mTasksRepository.getTask(values.getTaskId())
+                .map(new Func1<Task, ResponseValues>() {
             @Override
-            public void onTaskLoaded(Task task) {
-                if (task != null) {
-                    ResponseValue responseValue = new ResponseValue(task);
-                    getUseCaseCallback().onSuccess(responseValue);
-                } else {
-                    getUseCaseCallback().onError();
-                }
-            }
-
-            @Override
-            public void onDataNotAvailable() {
-                getUseCaseCallback().onError();
+            public ResponseValues call(Task task) {
+                return new ResponseValues(task);
             }
         });
     }
 
-    public static final class RequestValues implements UseCase.RequestValues {
+
+    public static final class RequestValues implements RxUseCase.RequestValues {
 
         private final String mTaskId;
 
@@ -69,11 +67,11 @@ public class GetTask extends UseCase<GetTask.RequestValues, GetTask.ResponseValu
         }
     }
 
-    public static final class ResponseValue implements UseCase.ResponseValue {
+    public static final class ResponseValues implements RxUseCase.ResponseValues {
 
         private Task mTask;
 
-        public ResponseValue(@NonNull Task task) {
+        public ResponseValues(@NonNull Task task) {
             mTask = checkNotNull(task, "task cannot be null!");
         }
 

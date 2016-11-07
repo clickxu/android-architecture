@@ -18,30 +18,33 @@ package com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase
 
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.UseCase;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
+import com.example.android.architecture.blueprints.todoapp.CompletableUseCase;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Marks a task as completed.
  */
-public class CompleteTask extends UseCase<CompleteTask.RequestValues, CompleteTask.ResponseValue> {
+public class CompleteTask extends CompletableUseCase<CompleteTask.RequestValues> {
 
     private final TasksRepository mTasksRepository;
 
-    public CompleteTask(@NonNull TasksRepository tasksRepository) {
+    public CompleteTask(@NonNull TasksRepository tasksRepository,
+                        @NonNull BaseSchedulerProvider schedulerProvider) {
+        super(schedulerProvider.io(), schedulerProvider.ui());
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
     @Override
-    protected void executeUseCase(final RequestValues values) {
-        String completedTask = values.getCompletedTask();
+    protected void complete(RequestValues values) {
+        final String completedTask = values.getCompletedTask();
         mTasksRepository.completeTask(completedTask);
-        getUseCaseCallback().onSuccess(new ResponseValue());
     }
 
-    public static final class RequestValues implements UseCase.RequestValues {
+    public static final class RequestValues implements RxUseCase.RequestValues {
 
         private final String mCompletedTask;
 
@@ -52,8 +55,5 @@ public class CompleteTask extends UseCase<CompleteTask.RequestValues, CompleteTa
         public String getCompletedTask() {
             return mCompletedTask;
         }
-    }
-
-    public static final class ResponseValue implements UseCase.ResponseValue {
     }
 }

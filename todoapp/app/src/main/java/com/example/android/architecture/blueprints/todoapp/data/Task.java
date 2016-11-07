@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.architecture.blueprints.todoapp.tasks.domain.model;
+package com.example.android.architecture.blueprints.todoapp.data;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;

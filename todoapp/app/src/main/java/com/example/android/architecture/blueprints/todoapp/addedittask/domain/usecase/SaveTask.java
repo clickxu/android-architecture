@@ -18,32 +18,48 @@ package com.example.android.architecture.blueprints.todoapp.addedittask.domain.u
 
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.UseCase;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.model.Task;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
+import com.example.android.architecture.blueprints.todoapp.SimpleUseCase;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+
+import rx.Observable;
+import rx.Subscriber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Updates or creates a new {@link Task} in the {@link TasksRepository}.
  */
-public class SaveTask extends UseCase<SaveTask.RequestValues, SaveTask.ResponseValue> {
+public class SaveTask extends SimpleUseCase<SaveTask.RequestValues, SaveTask.ResponseValues> {
 
     private final TasksRepository mTasksRepository;
 
-    public SaveTask(@NonNull TasksRepository tasksRepository) {
+    public SaveTask(@NonNull TasksRepository tasksRepository,
+                    @NonNull BaseSchedulerProvider schedulerProvider) {
+        super(schedulerProvider.io(), schedulerProvider.ui());
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
     @Override
-    protected void executeUseCase(final RequestValues values) {
-        Task task = values.getTask();
-        mTasksRepository.saveTask(task);
-
-        getUseCaseCallback().onSuccess(new ResponseValue(task));
+    public Observable<ResponseValues> buildUseCase(final RequestValues values) {
+        return Observable.create(new Observable.OnSubscribe<ResponseValues>() {
+            @Override
+            public void call(Subscriber<? super ResponseValues> subscriber) {
+                try {
+                    Task task = values.getTask();
+                    mTasksRepository.saveTask(task);
+                    subscriber.onNext(new ResponseValues(task));
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        });
     }
 
-    public static final class RequestValues implements UseCase.RequestValues {
+    public static final class RequestValues implements RxUseCase.RequestValues {
 
         private final Task mTask;
 
@@ -56,11 +72,11 @@ public class SaveTask extends UseCase<SaveTask.RequestValues, SaveTask.ResponseV
         }
     }
 
-    public static final class ResponseValue implements UseCase.ResponseValue {
+    public static final class ResponseValues implements RxUseCase.ResponseValues {
 
         private final Task mTask;
 
-        public ResponseValue(@NonNull Task task) {
+        public ResponseValues(@NonNull Task task) {
             mTask = checkNotNull(task, "task cannot be null!");
         }
 

@@ -16,8 +16,6 @@
 
 package com.example.android.architecture.blueprints.todoapp;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.content.Context;
 import android.support.annotation.NonNull;
 
@@ -29,11 +27,12 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepo
 import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksLocalDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.remote.TasksRemoteDataSource;
 import com.example.android.architecture.blueprints.todoapp.statistics.domain.usecase.GetStatistics;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.filter.FilterFactory;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.ActivateTask;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.ClearCompleteTasks;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.CompleteTask;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.GetTasks;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Enables injection of production implementations for

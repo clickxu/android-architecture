@@ -18,30 +18,34 @@ package com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase
 
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.UseCase;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
+import com.example.android.architecture.blueprints.todoapp.CompletableUseCase;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Marks a task as active (not completed yet).
  */
-public class ActivateTask extends UseCase<ActivateTask.RequestValues, ActivateTask.ResponseValue> {
+public class ActivateTask extends CompletableUseCase<ActivateTask.RequestValues> {
 
     private final TasksRepository mTasksRepository;
 
-    public ActivateTask(@NonNull TasksRepository tasksRepository) {
+    public ActivateTask(@NonNull TasksRepository tasksRepository,
+                        @NonNull BaseSchedulerProvider schedulerProvider) {
+        super(schedulerProvider.io(), schedulerProvider.ui());
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
     @Override
-    protected void executeUseCase(final RequestValues values) {
+    protected void complete(RequestValues values) {
         String activeTask = values.getActivateTask();
         mTasksRepository.activateTask(activeTask);
-        getUseCaseCallback().onSuccess(new ResponseValue());
     }
 
-    public static final class RequestValues implements UseCase.RequestValues {
+
+    public static final class RequestValues implements RxUseCase.RequestValues {
 
         private final String mActivateTask;
 
@@ -53,6 +57,4 @@ public class ActivateTask extends UseCase<ActivateTask.RequestValues, ActivateTa
             return mActivateTask;
         }
     }
-
-    public static final class ResponseValue implements UseCase.ResponseValue { }
 }

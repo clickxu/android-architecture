@@ -16,16 +16,32 @@
 
 package com.example.android.architecture.blueprints.todoapp;
 
-/**
- * Interface for schedulers, see {@link UseCaseThreadPoolScheduler}.
- */
-public interface UseCaseScheduler {
+import rx.Observable;
 
-    void execute(Runnable runnable);
+public abstract class RxUseCase<Q extends RxUseCase.RequestValues, P extends RxUseCase.ResponseValues> {
 
-    <V extends UseCase.ResponseValue> void notifyResponse(final V response,
-            final UseCase.UseCaseCallback<V> useCaseCallback);
+    /**
+     * Builds an {@link rx.Observable} which will be used when executing the current {@link RxUseCase}.
+     */
+    protected abstract Observable<P> buildUseCase(Q requestValues);
 
-    <V extends UseCase.ResponseValue> void onError(
-            final UseCase.UseCaseCallback<V> useCaseCallback);
+    /**
+     * Data passed to a request.
+     */
+    public interface RequestValues {
+    }
+
+    /**
+     * Data received from a response.
+     */
+    public interface ResponseValues {
+    }
+
+    public enum NoRequestValues implements RequestValues {
+        INSTANCE
+    }
+
+    public enum NoResponseValues implements ResponseValues {
+        INSTANCE
+    }
 }

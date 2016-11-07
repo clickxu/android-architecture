@@ -2,33 +2,38 @@ package com.example.android.architecture.blueprints.todoapp.statistics.domain.us
 
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.UseCase;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.model.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
+import com.example.android.architecture.blueprints.todoapp.SimpleUseCase;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.statistics.domain.model.Statistics;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
 import java.util.List;
+
+import rx.Observable;
+import rx.functions.Func1;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Calculate statistics of active and completed Tasks {@link Task} in the {@link TasksRepository}.
  */
-public class GetStatistics extends UseCase<GetStatistics.RequestValues, GetStatistics.ResponseValue> {
+public class GetStatistics extends SimpleUseCase<GetStatistics.RequestValues, GetStatistics.ResponseValues> {
 
     private final TasksRepository mTasksRepository;
 
-    public GetStatistics(@NonNull TasksRepository tasksRepository) {
+    public GetStatistics(@NonNull TasksRepository tasksRepository,
+                         @NonNull BaseSchedulerProvider schedulerProvider) {
+        super(schedulerProvider.io(), schedulerProvider.ui());
         mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
     }
 
     @Override
-    protected void executeUseCase(RequestValues requestValues) {
-        mTasksRepository.getTasks(new TasksDataSource.LoadTasksCallback() {
+    public Observable<ResponseValues> buildUseCase(RequestValues requestValues) {
+        return mTasksRepository.getTasks().map(new Func1<List<Task>, ResponseValues>() {
             @Override
-            public void onTasksLoaded(List<Task> tasks) {
-
+            public ResponseValues call(List<Task> tasks) {
                 int activeTasks = 0;
                 int completedTasks = 0;
 
@@ -40,26 +45,19 @@ public class GetStatistics extends UseCase<GetStatistics.RequestValues, GetStati
                         activeTasks += 1;
                     }
                 }
-
-                ResponseValue responseValue = new ResponseValue(new Statistics(completedTasks, activeTasks));
-                getUseCaseCallback().onSuccess(responseValue);
-            }
-
-            @Override
-            public void onDataNotAvailable() {
-                getUseCaseCallback().onError();
+                return new ResponseValues(new Statistics(completedTasks, activeTasks));
             }
         });
     }
 
-    public static class RequestValues implements UseCase.RequestValues {
+    public static class RequestValues implements RxUseCase.RequestValues {
     }
 
-    public static class ResponseValue implements UseCase.ResponseValue {
+    public static class ResponseValues implements RxUseCase.ResponseValues {
 
         private final Statistics mStatistics;
 
-        public ResponseValue(@NonNull Statistics statistics) {
+        public ResponseValues(@NonNull Statistics statistics) {
             mStatistics = checkNotNull(statistics, "statistics cannot be null!");
         }
 

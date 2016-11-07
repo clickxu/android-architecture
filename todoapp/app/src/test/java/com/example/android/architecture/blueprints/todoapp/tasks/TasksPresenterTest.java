@@ -16,32 +16,26 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks;
 
-import com.example.android.architecture.blueprints.todoapp.TestUseCaseScheduler;
-import com.example.android.architecture.blueprints.todoapp.UseCaseHandler;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource.LoadTasksCallback;
+import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.filter.FilterFactory;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.model.Task;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.ActivateTask;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.ClearCompleteTasks;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.CompleteTask;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.GetTasks;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.ImmediateSchedulerProvider;
 import com.google.common.collect.Lists;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import rx.Observable;
+
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,12 +52,7 @@ public class TasksPresenterTest {
     @Mock
     private TasksContract.View mTasksView;
 
-    /**
-     * {@link ArgumentCaptor} is a powerful Mockito API to capture argument values and use them to
-     * perform further actions or assertions on them.
-     */
-    @Captor
-    private ArgumentCaptor<LoadTasksCallback> mLoadTasksCallbackCaptor;
+    private BaseSchedulerProvider mSchedulerProvider;
 
     private TasksPresenter mTasksPresenter;
 
@@ -73,83 +62,65 @@ public class TasksPresenterTest {
         // inject the mocks in the test the initMocks method needs to be called.
         MockitoAnnotations.initMocks(this);
 
+        // Make the sure that all schedulers are immediate.
+        mSchedulerProvider = new ImmediateSchedulerProvider();
+
         // Get a reference to the class under test
         mTasksPresenter = givenTasksPresenter();
 
         // The presenter won't update the view unless it's active.
         when(mTasksView.isActive()).thenReturn(true);
 
-        // We start the tasks to 3, with one active and two completed
+        // We subscribe the tasks to 3, with one active and two completed
         TASKS = Lists.newArrayList(new Task("Title1", "Description1"),
                 new Task("Title2", "Description2", true), new Task("Title3", "Description3", true));
     }
 
     private TasksPresenter givenTasksPresenter() {
-        UseCaseHandler useCaseHandler = new UseCaseHandler(new TestUseCaseScheduler());
-        GetTasks getTasks = new GetTasks(mTasksRepository, new FilterFactory());
-        CompleteTask completeTask = new CompleteTask(mTasksRepository);
-        ActivateTask activateTask = new ActivateTask(mTasksRepository);
-        ClearCompleteTasks clearCompleteTasks = new ClearCompleteTasks(mTasksRepository);
+        GetTasks getTasks = new GetTasks(mTasksRepository, mSchedulerProvider);
+        CompleteTask completeTask = new CompleteTask(mTasksRepository, mSchedulerProvider);
+        ActivateTask activateTask = new ActivateTask(mTasksRepository, mSchedulerProvider);
+        ClearCompleteTasks clearCompleteTasks = new ClearCompleteTasks(mTasksRepository, mSchedulerProvider);
 
-        return new TasksPresenter(useCaseHandler, mTasksView, getTasks, completeTask, activateTask,
-                clearCompleteTasks);
+        return new TasksPresenter(mTasksView, getTasks, completeTask, activateTask, clearCompleteTasks);
     }
 
     @Test
     public void loadAllTasksFromRepositoryAndLoadIntoView() {
         // Given an initialized TasksPresenter with initialized tasks
+        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
         // When loading of Tasks is requested
         mTasksPresenter.setFiltering(TasksFilterType.ALL_TASKS);
         mTasksPresenter.loadTasks(true);
 
-        // Callback is captured and invoked with stubbed tasks
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onTasksLoaded(TASKS);
-
         // Then progress indicator is shown
-        InOrder inOrder = inOrder(mTasksView);
-        inOrder.verify(mTasksView).setLoadingIndicator(true);
+        verify(mTasksView).setLoadingIndicator(true);
         // Then progress indicator is hidden and all tasks are shown in UI
-        inOrder.verify(mTasksView).setLoadingIndicator(false);
-        ArgumentCaptor<List> showTasksArgumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(mTasksView).showTasks(showTasksArgumentCaptor.capture());
-        assertTrue(showTasksArgumentCaptor.getValue().size() == 3);
+        verify(mTasksView).setLoadingIndicator(false);
     }
 
     @Test
     public void loadActiveTasksFromRepositoryAndLoadIntoView() {
         // Given an initialized TasksPresenter with initialized tasks
+        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
         // When loading of Tasks is requested
         mTasksPresenter.setFiltering(TasksFilterType.ACTIVE_TASKS);
         mTasksPresenter.loadTasks(true);
 
-        // Callback is captured and invoked with stubbed tasks
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onTasksLoaded(TASKS);
-
         // Then progress indicator is hidden and active tasks are shown in UI
         verify(mTasksView).setLoadingIndicator(false);
-        ArgumentCaptor<List> showTasksArgumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(mTasksView).showTasks(showTasksArgumentCaptor.capture());
-        assertTrue(showTasksArgumentCaptor.getValue().size() == 1);
     }
 
     @Test
     public void loadCompletedTasksFromRepositoryAndLoadIntoView() {
         // Given an initialized TasksPresenter with initialized tasks
+        when(mTasksRepository.getTasks()).thenReturn(Observable.just(TASKS));
         // When loading of Tasks is requested
         mTasksPresenter.setFiltering(TasksFilterType.COMPLETED_TASKS);
         mTasksPresenter.loadTasks(true);
 
-        // Callback is captured and invoked with stubbed tasks
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onTasksLoaded(TASKS);
-
         // Then progress indicator is hidden and completed tasks are shown in UI
         verify(mTasksView).setLoadingIndicator(false);
-        ArgumentCaptor<List> showTasksArgumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(mTasksView).showTasks(showTasksArgumentCaptor.capture());
-        assertTrue(showTasksArgumentCaptor.getValue().size() == 2);
     }
 
     @Test
@@ -177,12 +148,14 @@ public class TasksPresenterTest {
     public void completeTask_ShowsTaskMarkedComplete() {
         // Given a stubbed task
         Task task = new Task("Details Requested", "For this task");
+        // And no tasks available in the repository
+        when(mTasksRepository.getTasks()).thenReturn(Observable.<List<Task>>empty());
 
         // When task is marked as complete
         mTasksPresenter.completeTask(task);
 
         // Then repository is called and task marked complete UI is shown
-        verify(mTasksRepository).completeTask(eq(task.getId()));
+        verify(mTasksRepository).completeTask(task);
         verify(mTasksView).showTaskMarkedComplete();
     }
 
@@ -190,25 +163,26 @@ public class TasksPresenterTest {
     public void activateTask_ShowsTaskMarkedActive() {
         // Given a stubbed completed task
         Task task = new Task("Details Requested", "For this task", true);
+        // And no tasks available in the repository
+        when(mTasksRepository.getTasks()).thenReturn(Observable.<List<Task>>empty());
         mTasksPresenter.loadTasks(true);
 
         // When task is marked as activated
         mTasksPresenter.activateTask(task);
 
         // Then repository is called and task marked active UI is shown
-        verify(mTasksRepository).activateTask(eq(task.getId()));
+        verify(mTasksRepository).activateTask(task);
         verify(mTasksView).showTaskMarkedActive();
     }
 
     @Test
     public void unavailableTasks_ShowsError() {
+        // Given that no tasks are available in the repository
+        when(mTasksRepository.getTasks()).thenReturn(Observable.<List<Task>>error(new Exception()));
+
         // When tasks are loaded
         mTasksPresenter.setFiltering(TasksFilterType.ALL_TASKS);
         mTasksPresenter.loadTasks(true);
-
-        // And the tasks aren't available in the repository
-        verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());
-        mLoadTasksCallbackCaptor.getValue().onDataNotAvailable();
 
         // Then an error message is shown
         verify(mTasksView).showLoadingTasksError();

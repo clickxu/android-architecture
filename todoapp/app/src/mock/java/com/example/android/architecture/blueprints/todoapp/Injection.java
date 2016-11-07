@@ -16,8 +16,6 @@
 
 package com.example.android.architecture.blueprints.todoapp;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.content.Context;
 import android.support.annotation.NonNull;
 
@@ -29,11 +27,14 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksData
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksLocalDataSource;
 import com.example.android.architecture.blueprints.todoapp.statistics.domain.usecase.GetStatistics;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.filter.FilterFactory;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.ActivateTask;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.ClearCompleteTasks;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.CompleteTask;
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.GetTasks;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Enables injection of mock implementations for
@@ -45,42 +46,42 @@ public class Injection {
     public static TasksRepository provideTasksRepository(@NonNull Context context) {
         checkNotNull(context);
         return TasksRepository.getInstance(FakeTasksRemoteDataSource.getInstance(),
-                TasksLocalDataSource.getInstance(context));
+                TasksLocalDataSource.getInstance(context, provideSchedulerProvider()));
+    }
+
+    public static BaseSchedulerProvider provideSchedulerProvider() {
+        return SchedulerProvider.getInstance();
     }
 
     public static GetTasks provideGetTasks(@NonNull Context context) {
-        return new GetTasks(provideTasksRepository(context), new FilterFactory());
-    }
-
-    public static UseCaseHandler provideUseCaseHandler() {
-        return UseCaseHandler.getInstance();
+        return new GetTasks(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static GetTask provideGetTask(@NonNull Context context) {
-        return new GetTask(Injection.provideTasksRepository(context));
+        return new GetTask(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static SaveTask provideSaveTask(@NonNull Context context) {
-        return new SaveTask(Injection.provideTasksRepository(context));
+        return new SaveTask(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static CompleteTask provideCompleteTasks(@NonNull Context context) {
-        return new CompleteTask(Injection.provideTasksRepository(context));
+        return new CompleteTask(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static ActivateTask provideActivateTask(@NonNull Context context) {
-        return new ActivateTask(Injection.provideTasksRepository(context));
+        return new ActivateTask(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static ClearCompleteTasks provideClearCompleteTasks(@NonNull Context context) {
-        return new ClearCompleteTasks(Injection.provideTasksRepository(context));
+        return new ClearCompleteTasks(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static DeleteTask provideDeleteTask(@NonNull Context context) {
-        return new DeleteTask(Injection.provideTasksRepository(context));
+        return new DeleteTask(provideTasksRepository(context), provideSchedulerProvider());
     }
 
     public static GetStatistics provideGetStatistics(@NonNull Context context) {
-        return new GetStatistics(Injection.provideTasksRepository(context));
+        return new GetStatistics(provideTasksRepository(context), provideSchedulerProvider());
     }
 }

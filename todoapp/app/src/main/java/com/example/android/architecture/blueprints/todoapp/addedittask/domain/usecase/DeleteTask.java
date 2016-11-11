@@ -24,6 +24,8 @@ import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
+import javax.inject.Inject;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -33,10 +35,11 @@ public class DeleteTask extends CompletableUseCase<DeleteTask.RequestValues> {
 
     private final TasksRepository mTasksRepository;
 
+    @Inject
     public DeleteTask(@NonNull TasksRepository tasksRepository,
                       @NonNull BaseSchedulerProvider schedulerProvider) {
         super(schedulerProvider.io(), schedulerProvider.ui());
-        mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
+        mTasksRepository = tasksRepository;
     }
 
     @Override

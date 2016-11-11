@@ -23,10 +23,12 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import javax.inject.Inject;
 
 /**
  * Displays an add or edit task screen.
@@ -34,6 +36,8 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 public class AddEditTaskActivity extends AppCompatActivity {
 
     public static final int REQUEST_ADD_TASK = 1;
+
+    @Inject AddEditTaskPresenter mAddEditTasksPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,11 +73,15 @@ public class AddEditTaskActivity extends AppCompatActivity {
                     addEditTaskFragment, R.id.contentFrame);
         }
 
+        ToDoApplication toDoApplication = (ToDoApplication) getApplication();
         // Create the presenter
-        new AddEditTaskPresenter(taskId, addEditTaskFragment,
-                Injection.provideGetTask(getApplicationContext()),
-                Injection.provideSaveTask(getApplicationContext())
-        );
+        DaggerAddEditTaskComponent.builder()
+                .addEditTaskPresenterModule(
+                        new AddEditTaskPresenterModule(addEditTaskFragment, taskId))
+                .tasksRepositoryComponent(toDoApplication.getTasksRepositoryComponent())
+                .schedulerProviderComponent(toDoApplication.getSchedulerProviderComponent())
+                .build()
+                .inject(this);
     }
 
     @Override

@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import rx.Observable;
 import rx.functions.Action0;
 import rx.functions.Action1;
@@ -42,10 +45,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * obtained from the server, by using the remote data source only if the local database doesn't
  * exist or is empty.
  */
+@Singleton
 public class TasksRepository implements TasksDataSource {
-
-    @Nullable
-    private static TasksRepository INSTANCE = null;
 
     @NonNull
     private final TasksDataSource mTasksRemoteDataSource;
@@ -67,34 +68,23 @@ public class TasksRepository implements TasksDataSource {
     @VisibleForTesting
     boolean mCacheIsDirty = false;
 
-    // Prevent direct instantiation.
-    private TasksRepository(@NonNull TasksDataSource tasksRemoteDataSource,
-                            @NonNull TasksDataSource tasksLocalDataSource) {
+    /**
+     * By marking the constructor with {@code @Inject}, Dagger will try to inject the dependencies
+     * required to create an instance of the TasksRepository. Because {@link TasksDataSource} is an
+     * interface, we must provide to Dagger a way to build those arguments, this is done in
+     * {@link TasksRepositoryModule}.
+     * <P>
+     * When two arguments or more have the same type, we must provide to Dagger a way to
+     * differentiate them. This is done using a qualifier.
+     * <p>
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
+     */
+    @Inject
+    public TasksRepository(@Remote TasksDataSource tasksRemoteDataSource,
+                            @Local TasksDataSource tasksLocalDataSource) {
         mTasksRemoteDataSource = checkNotNull(tasksRemoteDataSource);
         mTasksLocalDataSource = checkNotNull(tasksLocalDataSource);
-    }
-
-    /**
-     * Returns the single instance of this class, creating it if necessary.
-     *
-     * @param tasksRemoteDataSource the backend data source
-     * @param tasksLocalDataSource  the device storage data source
-     * @return the {@link TasksRepository} instance
-     */
-    public static TasksRepository getInstance(@NonNull TasksDataSource tasksRemoteDataSource,
-                                              @NonNull TasksDataSource tasksLocalDataSource) {
-        if (INSTANCE == null) {
-            INSTANCE = new TasksRepository(tasksRemoteDataSource, tasksLocalDataSource);
-        }
-        return INSTANCE;
-    }
-
-    /**
-     * Used to force {@link #getInstance(TasksDataSource, TasksDataSource)} to create a new instance
-     * next time it's called.
-     */
-    public static void destroyInstance() {
-        INSTANCE = null;
     }
 
     /**

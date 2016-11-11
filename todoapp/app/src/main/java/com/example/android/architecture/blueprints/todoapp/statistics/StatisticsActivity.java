@@ -28,11 +28,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksActivity;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import javax.inject.Inject;
 
 /**
  * Show statistics for tasks.
@@ -40,6 +42,8 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 public class StatisticsActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
+
+    @Inject StatisticsPresenter mStatiticsPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +75,12 @@ public class StatisticsActivity extends AppCompatActivity {
                     statisticsFragment, R.id.contentFrame);
         }
 
-        new StatisticsPresenter(statisticsFragment,
-                Injection.provideGetStatistics(getApplicationContext()));
+        ToDoApplication toDoApplication = (ToDoApplication) getApplication();
+        DaggerStatisticsComponent.builder()
+                .statisticsPresenterModule(new StatisticsPresenterModule(statisticsFragment))
+                .tasksRepositoryComponent(toDoApplication.getTasksRepositoryComponent())
+                .schedulerProviderComponent(toDoApplication.getSchedulerProviderComponent())
+                .build().inject(this);
     }
 
     @Override

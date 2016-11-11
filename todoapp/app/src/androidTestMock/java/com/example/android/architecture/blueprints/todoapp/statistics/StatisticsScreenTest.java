@@ -18,7 +18,6 @@ package com.example.android.architecture.blueprints.todoapp.statistics;
 
 import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.Espresso;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -26,7 +25,6 @@ import android.test.suitebuilder.annotation.LargeTest;
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.data.FakeTasksRemoteDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetailActivity;
 
 import org.junit.Before;
@@ -70,21 +68,14 @@ public class StatisticsScreenTest {
     @Before
     public void intentWithStubbedTaskId() {
         // Given some tasks
-        TasksRepository.destroyInstance();
-        FakeTasksRemoteDataSource.getInstance().addTasks(new Task("Title1", "", false));
-        FakeTasksRemoteDataSource.getInstance().addTasks(new Task("Title2", "", true));
+        FakeTasksRemoteDataSource source = new FakeTasksRemoteDataSource();
+        source.deleteAllTasks();
+        source.addTasks(new Task("Title1", "", false));
+        source.addTasks(new Task("Title2", "", true));
 
-        // Lazily subscribe the Activity from the ActivityTestRule
+        // Lazily start the Activity from the ActivityTestRule
         Intent startIntent = new Intent();
         mStatisticsActivityTestRule.launchActivity(startIntent);
-        /**
-         * Prepare your test fixture for this test. In this case we register an IdlingResources with
-         * Espresso. IdlingResource resource is a great way to tell Espresso when your app is in an
-         * idle state. This helps Espresso to synchronize your test actions, which makes tests significantly
-         * more reliable.
-         */
-        Espresso.registerIdlingResources(
-                mStatisticsActivityTestRule.getActivity().getCountingIdlingResource());
     }
 
     @Test

@@ -23,6 +23,8 @@ import com.example.android.architecture.blueprints.todoapp.addedittask.domain.us
 import com.example.android.architecture.blueprints.todoapp.addedittask.domain.usecase.SaveTask;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 
+import javax.inject.Inject;
+
 import rx.Subscriber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -44,19 +46,25 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter {
     private String mTaskId;
 
     /**
-     * Creates a presenter for the add/edit view.
-     *
-     * @param taskId      ID of the task to edit or null for a new task
-     * @param addTaskView the add/edit view
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
      */
+    @Inject
     public AddEditTaskPresenter(@Nullable String taskId,
                                 @NonNull AddEditTaskContract.View addTaskView,
                                 @NonNull GetTask getTask, @NonNull SaveTask saveTask) {
         mTaskId = taskId;
-        mAddTaskView = checkNotNull(addTaskView, "addTaskView cannot be null!");
-        mGetTask = checkNotNull(getTask, "getTask cannot be null!");
-        mSaveTask = checkNotNull(saveTask, "saveTask cannot be null!");
+        mAddTaskView = addTaskView;
+        mGetTask = getTask;
+        mSaveTask = saveTask;
+    }
 
+    /**
+     * Method injection is used here to safely reference {@code this} after the object is created.
+     * For more information, see Java Concurrency in Practice.
+     */
+    @Inject
+    void setupListeners() {
         mAddTaskView.setPresenter(this);
     }
 

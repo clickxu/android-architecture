@@ -21,6 +21,8 @@ import android.support.annotation.NonNull;
 import com.example.android.architecture.blueprints.todoapp.statistics.domain.model.Statistics;
 import com.example.android.architecture.blueprints.todoapp.statistics.domain.usecase.GetStatistics;
 
+import javax.inject.Inject;
+
 import rx.Subscriber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -34,12 +36,26 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
     private final StatisticsContract.View mStatisticsView;
     private final GetStatistics mGetStatistics;
 
+    /**
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
+     */
+    @Inject
     public StatisticsPresenter(
             @NonNull StatisticsContract.View statisticsView,
             @NonNull GetStatistics getStatistics) {
         mStatisticsView = checkNotNull(statisticsView, "StatisticsView cannot be null!");
         mGetStatistics = checkNotNull(getStatistics,"getStatistics cannot be null!");
 
+        mStatisticsView.setPresenter(this);
+    }
+
+    /**
+     * Method injection is used here to safely reference {@code this} after the object is created.
+     * For more information, see Java Concurrency in Practice.
+     */
+    @Inject
+    void setupListeners() {
         mStatisticsView.setPresenter(this);
     }
 

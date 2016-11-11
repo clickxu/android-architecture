@@ -28,11 +28,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.statistics.StatisticsActivity;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import javax.inject.Inject;
 
 public class TasksActivity extends AppCompatActivity {
 
@@ -40,7 +42,7 @@ public class TasksActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
 
-    private TasksPresenter mTasksPresenter;
+    @Inject TasksPresenter mTasksPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,13 +73,13 @@ public class TasksActivity extends AppCompatActivity {
                     getSupportFragmentManager(), tasksFragment, R.id.contentFrame);
         }
 
+        ToDoApplication toDoApplication = (ToDoApplication) getApplication();
         // Create the presenter
-        mTasksPresenter = new TasksPresenter(tasksFragment,
-                Injection.provideGetTasks(getApplicationContext()),
-                Injection.provideCompleteTasks(getApplicationContext()),
-                Injection.provideActivateTask(getApplicationContext()),
-                Injection.provideClearCompleteTasks(getApplicationContext())
-                );
+        DaggerTasksComponent.builder()
+                .tasksRepositoryComponent(toDoApplication.getTasksRepositoryComponent())
+                .schedulerProviderComponent(toDoApplication.getSchedulerProviderComponent())
+                .tasksPresenterModule(new TasksPresenterModule(tasksFragment)).build()
+                .inject(this);
 
         // Load previously saved state, if available.
         if (savedInstanceState != null) {

@@ -44,17 +44,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class TasksLocalDataSource implements TasksDataSource {
 
-    @Nullable
-    private static TasksLocalDataSource INSTANCE;
-
     @NonNull
     private final BriteDatabase mDatabaseHelper;
 
     @NonNull
     private Func1<Cursor, Task> mTaskMapperFunction;
 
-    // Prevent direct instantiation.
-    private TasksLocalDataSource(@NonNull Context context,
+    public TasksLocalDataSource(@NonNull Context context,
                                  @NonNull BaseSchedulerProvider schedulerProvider) {
         checkNotNull(context, "context cannot be null");
         checkNotNull(schedulerProvider, "scheduleProvider cannot be null");
@@ -73,19 +69,6 @@ public class TasksLocalDataSource implements TasksDataSource {
                 return new Task(title, description, itemId, completed);
             }
         };
-    }
-
-    public static TasksLocalDataSource getInstance(
-            @NonNull Context context,
-            @NonNull BaseSchedulerProvider schedulerProvider) {
-        if (INSTANCE == null) {
-            INSTANCE = new TasksLocalDataSource(context, schedulerProvider);
-        }
-        return INSTANCE;
-    }
-
-    public static void destroyInstance() {
-        INSTANCE = null;
     }
 
     @Override

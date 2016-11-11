@@ -27,6 +27,8 @@ import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.
 import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.CompleteTask;
 import com.google.common.base.Strings;
 
+import javax.inject.Inject;
+
 import rx.Subscriber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,6 +48,11 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
     @Nullable
     private String mTaskId;
 
+    /**
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
+     */
+    @Inject
     public TaskDetailPresenter(@Nullable String taskId,
             @NonNull TaskDetailContract.View taskDetailView,
             @NonNull GetTask getTask,
@@ -58,6 +65,15 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
         mCompleteTask = checkNotNull(completeTask, "completeTask cannot be null!");
         mActivateTask = checkNotNull(activateTask, "activateTask cannot be null!");
         mDeleteTask = checkNotNull(deleteTask, "deleteTask cannot be null!");
+        mTaskDetailView.setPresenter(this);
+    }
+
+    /**
+     * Method injection is used here to safely reference {@code this} after the object is created.
+     * For more information, see Java Concurrency in Practice.
+     */
+    @Inject
+    void setupListeners() {
         mTaskDetailView.setPresenter(this);
     }
 

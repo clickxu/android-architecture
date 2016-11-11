@@ -27,6 +27,8 @@ import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseS
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -39,6 +41,7 @@ public class GetTasks extends SimpleUseCase<GetTasks.RequestValues, GetTasks.Res
 
     private final TasksRepository mTasksRepository;
 
+    @Inject
     public GetTasks(@NonNull TasksRepository tasksRepository,
                     @NonNull BaseSchedulerProvider schedulerProvider) {
         super(schedulerProvider.io(), schedulerProvider.ui());

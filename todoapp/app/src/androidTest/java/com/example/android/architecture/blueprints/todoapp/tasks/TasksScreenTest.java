@@ -16,6 +16,7 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks;
 
+import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -24,10 +25,13 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ListView;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.TestUtils;
+import com.example.android.architecture.blueprints.todoapp.data.FakeTasksRemoteDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksLocalDataSource;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -55,6 +59,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static com.example.android.architecture.blueprints.todoapp.TestUtils.getCurrentActivity;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.IsNot.not;
 
@@ -89,8 +94,7 @@ public class TasksScreenTest {
                 protected void beforeActivityLaunched() {
                     super.beforeActivityLaunched();
                     // Doing this in @Before generates a race condition.
-                    Injection.provideTasksRepository(InstrumentationRegistry.getTargetContext())
-                        .deleteAllTasks();
+                    getTasksRepository(InstrumentationRegistry.getTargetContext()).deleteAllTasks();
                 }
             };
 
@@ -504,5 +508,10 @@ public class TasksScreenTest {
     private String getToolbarNavigationContentDescription() {
         return TestUtils.getToolbarNavigationContentDescription(
                 mTasksActivityTestRule.getActivity(), R.id.toolbar);
+    }
+
+    private TasksRepository getTasksRepository(Context context) {
+        return new TasksRepository(new FakeTasksRemoteDataSource(),
+                new TasksLocalDataSource(context, SchedulerProvider.getInstance()));
     }
 }

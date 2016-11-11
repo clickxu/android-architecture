@@ -24,6 +24,8 @@ import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -36,10 +38,11 @@ public class GetTask extends SimpleUseCase<GetTask.RequestValues, GetTask.Respon
 
     private final TasksRepository mTasksRepository;
 
+    @Inject
     public GetTask(@NonNull TasksRepository tasksRepository,
                    @NonNull BaseSchedulerProvider schedulerProvider) {
         super(schedulerProvider.io(), schedulerProvider.ui());
-        mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
+        mTasksRepository = tasksRepository;
     }
 
     @Override

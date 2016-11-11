@@ -31,6 +31,8 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import rx.Subscriber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -52,6 +54,7 @@ public class TasksPresenter implements TasksContract.Presenter {
 
     private boolean mFirstLoad = true;
 
+    @Inject
     public TasksPresenter(@NonNull TasksContract.View tasksView, @NonNull GetTasks getTasks,
             @NonNull CompleteTask completeTask, @NonNull ActivateTask activateTask,
             @NonNull ClearCompleteTasks clearCompleteTasks) {
@@ -61,6 +64,14 @@ public class TasksPresenter implements TasksContract.Presenter {
         mActivateTask = checkNotNull(activateTask, "activateTask cannot be null!");
         mClearCompleteTasks = checkNotNull(clearCompleteTasks,
                 "clearCompleteTasks cannot be null!");
+    }
+
+    /**
+     * Method injection is used here to safely reference {@code this} after the object is created.
+     * For more information, see Java Concurrency in Practice.
+     */
+    @Inject
+    void setupListeners() {
         mTasksView.setPresenter(this);
     }
 

@@ -23,6 +23,8 @@ import com.example.android.architecture.blueprints.todoapp.CompletableUseCase;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 
+import javax.inject.Inject;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -32,6 +34,7 @@ public class CompleteTask extends CompletableUseCase<CompleteTask.RequestValues>
 
     private final TasksRepository mTasksRepository;
 
+    @Inject
     public CompleteTask(@NonNull TasksRepository tasksRepository,
                         @NonNull BaseSchedulerProvider schedulerProvider) {
         super(schedulerProvider.io(), schedulerProvider.ui());

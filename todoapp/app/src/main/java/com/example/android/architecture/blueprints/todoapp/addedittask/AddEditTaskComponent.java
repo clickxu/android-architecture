@@ -3,7 +3,6 @@ package com.example.android.architecture.blueprints.todoapp.addedittask;
 import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepositoryComponent;
 import com.example.android.architecture.blueprints.todoapp.util.FragmentScoped;
-import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProviderComponent;
 
 import dagger.Component;

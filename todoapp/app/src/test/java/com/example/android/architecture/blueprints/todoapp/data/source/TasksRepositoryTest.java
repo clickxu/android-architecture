@@ -21,7 +21,6 @@ import android.content.Context;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.google.common.collect.Lists;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

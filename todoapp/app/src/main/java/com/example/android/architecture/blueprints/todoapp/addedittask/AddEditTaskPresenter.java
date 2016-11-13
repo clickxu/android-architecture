@@ -27,8 +27,6 @@ import javax.inject.Inject;
 
 import rx.Subscriber;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and
  * updates

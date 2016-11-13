@@ -13,6 +13,6 @@ public class SchedulerProviderModule {
 
     @Provides
     BaseSchedulerProvider provideSchedulerProvider() {
-        return SchedulerProvider.getInstance();
+        return new SchedulerProvider();
     }
 }

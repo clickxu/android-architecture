@@ -2,9 +2,6 @@ package com.example.android.architecture.blueprints.todoapp;
 
 import android.content.Context;
 
-import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
-import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
-
 import dagger.Module;
 import dagger.Provides;
 

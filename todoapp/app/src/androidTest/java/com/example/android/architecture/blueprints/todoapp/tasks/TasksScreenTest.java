@@ -16,7 +16,6 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks;
 
-import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -27,11 +26,8 @@ import android.widget.ListView;
 
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.TestUtils;
-import com.example.android.architecture.blueprints.todoapp.data.FakeTasksRemoteDataSource;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
-import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksLocalDataSource;
-import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -57,9 +53,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withContentDescription;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static com.example.android.architecture.blueprints.todoapp.TestUtils.getCurrentActivity;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.IsNot.not;
 
@@ -70,11 +64,11 @@ import static org.hamcrest.core.IsNot.not;
 @LargeTest
 public class TasksScreenTest {
 
-    private static final String TITLE1 = "TITLE1";
+    private final static String TITLE1 = "TITLE1";
 
-    private static final String DESCRIPTION = "DESCR";
+    private final static String DESCRIPTION = "DESCR";
 
-    private static final String TITLE2 = "TITLE2";
+    private final static String TITLE2 = "TITLE2";
 
     /**
      * {@link ActivityTestRule} is a JUnit {@link Rule @Rule} to launch your activity under test.
@@ -94,7 +88,9 @@ public class TasksScreenTest {
                 protected void beforeActivityLaunched() {
                     super.beforeActivityLaunched();
                     // Doing this in @Before generates a race condition.
-                    getTasksRepository(InstrumentationRegistry.getTargetContext()).deleteAllTasks();
+                    ((ToDoApplication) InstrumentationRegistry.getTargetContext()
+                            .getApplicationContext()).getTasksRepositoryComponent()
+                            .getTasksRepository().deleteAllTasks();
                 }
             };
 
@@ -438,36 +434,6 @@ public class TasksScreenTest {
         onView(withText(R.string.label_completed)).check(matches(isDisplayed()));
     }
 
-    @Test
-    public void orientationChange_DuringEdit() throws IllegalStateException {
-        // Add a completed task
-        createTask(TITLE1, DESCRIPTION);
-
-        // Open the task in details view
-        onView(withText(TITLE1)).perform(click());
-
-        // Click on the edit task button
-        onView(withId(R.id.fab_edit_task)).perform(click());
-
-        // Rotate the screen
-        TestUtils.rotateOrientation(getCurrentActivity());
-
-        // Edit task title and description
-        onView(withId(R.id.add_task_title))
-                .perform(replaceText(TITLE2), closeSoftKeyboard()); // Type new task title
-        onView(withId(R.id.add_task_description)).perform(replaceText(DESCRIPTION),
-                closeSoftKeyboard()); // Type new task description and close the keyboard
-
-        // Save the task
-        onView(withId(R.id.fab_edit_task_done)).perform(click());
-
-        // Verify task is displayed on screen in the task list.
-        onView(withItemText(TITLE2)).check(matches(isDisplayed()));
-
-        // Verify previous task is not displayed
-        onView(withItemText(TITLE1)).check(doesNotExist());
-    }
-
     private void viewAllTasks() {
         onView(withId(R.id.menu_filter)).perform(click());
         onView(withText(R.string.nav_all)).perform(click());
@@ -508,10 +474,5 @@ public class TasksScreenTest {
     private String getToolbarNavigationContentDescription() {
         return TestUtils.getToolbarNavigationContentDescription(
                 mTasksActivityTestRule.getActivity(), R.id.toolbar);
-    }
-
-    private TasksRepository getTasksRepository(Context context) {
-        return new TasksRepository(new FakeTasksRemoteDataSource(),
-                new TasksLocalDataSource(context, SchedulerProvider.getInstance()));
     }
 }

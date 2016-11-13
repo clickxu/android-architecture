@@ -23,8 +23,9 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 
 import com.example.android.architecture.blueprints.todoapp.R;
-import com.example.android.architecture.blueprints.todoapp.data.FakeTasksRemoteDataSource;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
+import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetailActivity;
 
 import org.junit.Before;
@@ -68,10 +69,12 @@ public class StatisticsScreenTest {
     @Before
     public void intentWithStubbedTaskId() {
         // Given some tasks
-        FakeTasksRemoteDataSource source = new FakeTasksRemoteDataSource();
-        source.deleteAllTasks();
-        source.addTasks(new Task("Title1", "", false));
-        source.addTasks(new Task("Title2", "", true));
+        TasksRepository repository = ((ToDoApplication) InstrumentationRegistry.getTargetContext()
+                .getApplicationContext()).getTasksRepositoryComponent()
+                .getTasksRepository();
+        repository.deleteAllTasks();
+        repository.saveTask(new Task("Title1", "", false));
+        repository.saveTask(new Task("Title2", "", true));
 
         // Lazily start the Activity from the ActivityTestRule
         Intent startIntent = new Intent();

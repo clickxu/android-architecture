@@ -2,9 +2,6 @@ package com.example.android.architecture.blueprints.todoapp.addedittask;
 
 import android.support.annotation.Nullable;
 
-import com.example.android.architecture.blueprints.todoapp.addedittask.domain.usecase.GetTask;
-import com.example.android.architecture.blueprints.todoapp.tasks.domain.usecase.GetTasks;
-
 import dagger.Module;
 import dagger.Provides;
 

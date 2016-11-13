@@ -18,8 +18,8 @@ package com.example.android.architecture.blueprints.todoapp.addedittask.domain.u
 
 import android.support.annotation.NonNull;
 
-import com.example.android.architecture.blueprints.todoapp.RxUseCase;
 import com.example.android.architecture.blueprints.todoapp.CompletableUseCase;
+import com.example.android.architecture.blueprints.todoapp.RxUseCase;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
